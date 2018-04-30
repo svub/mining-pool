@@ -126,7 +126,7 @@ ${poolServer.config.poolFee * 100}% pool fee ${/*| automatic payout every <put y
 Connected miners:    ${poolServer.numClients}
 Pool hashrate:       ${Math.round(poolServer.averageHashrate)} H/s
 Blocks mined:        ${poolServer.totalBlocksMined}
-Network:             main
+Network:             <main|test>
 
 
 ### HOW TO CONNECT ###
@@ -138,6 +138,11 @@ poolMining: {
     host: '${poolServer.config.name}',
     port: ${poolServer.port},
 }
+
+
+### ABOUT ###
+
+Pool address: ${poolServer.config.address}
 `);
         }).listen(port);
 
