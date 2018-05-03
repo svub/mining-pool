@@ -77,6 +77,9 @@ class PoolServer extends Nimiq.Observable {
         /** @type {number} */
         this._averageHashrate = 0;
 
+        /** @type {number} */
+        this._numClients = 0;
+
         /** @type {boolean} */
         this._started = false;
 
@@ -118,7 +121,7 @@ class PoolServer extends Nimiq.Observable {
 ${poolServer.config.name}
 ${Array(poolServer.config.name.length).fill('-').join('')}
 
-${poolServer.config.poolFee * 100}% pool fee ${/*| automatic payout every <put your schedule here> when confirmed balance is over ${Nimiq.Policy.satoshisToCoins(poolServer.config.autoPayOutLimit)} NIM*/}
+${poolServer.config.poolFee * 100}% pool fee ${''/*| automatic payout every <put your schedule here> when confirmed balance is over ${Nimiq.Policy.satoshisToCoins(poolServer.config.autoPayOutLimit)} NIM*/}
 
 
 ### STATS ###
@@ -298,6 +301,10 @@ Pool address: ${poolServer.config.address}
 
         Nimiq.Log.d(PoolServer, `Pool hashrate is ${Math.round(this._averageHashrate)} H/s (10 min average)`);
 
+        const clientCounts = this.getClientModeCounts();
+        this._numClients = clientCounts.smart + clientCounts.nano;
+        Nimiq.Log.d(PoolServer, `Connected miners: ${this._numClients}`);
+
         this._totalBlocksMined = await Helper.getTotalBlocksMined(this.connectionPool);
         Nimiq.Log.d(PoolServer, `Total blocks mined: ${this._totalBlocksMined}`);
 
@@ -393,7 +400,7 @@ Pool address: ${poolServer.config.address}
                     break;
             }
         }
-        return { unregistered: unregistered, smart: smart, nano: nano };
+        return { unregistered, smart, nano };
     }
 
     /**
@@ -406,6 +413,13 @@ Pool address: ${poolServer.config.address}
     /** @type {PoolConfig} */
     get config() {
         return this._config;
+    }
+
+    /**
+     * @type {number}
+     */
+    get numClients() {
+        return this._numClients;
     }
 
     /**
