@@ -173,7 +173,7 @@ Pool address: ${poolServer.config.address}
             if (req.headers['x-forwarded-for']) {
                 // Some proxy services append their own IP to the end of the header value,
                 // but we only need the origin IP, so we take the first IP of the potential list
-                const ip = req.headers['x-forwarded-for'].split(',')[0];
+                const ip = req.headers['x-forwarded-for'].split(/\s*,\s*/)[0];
                 netAddress = Nimiq.NetAddress.fromIP(ip);
             }
 
