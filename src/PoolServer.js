@@ -169,7 +169,9 @@ Pool address: ${poolServer.config.address}
      */
     _onConnection(ws, req) {
         try {
-            const netAddress = Nimiq.NetAddress.fromIP(req.connection.remoteAddress);
+            let netAddress = Nimiq.NetAddress.fromIP(req.connection.remoteAddress);
+            if (req.headers['x-forwarded-for']) netAddress = Nimiq.NetAddress.fromIP(req.headers['x-forwarded-for']);
+
             if (this._isIpBanned(netAddress)) {
                 Nimiq.Log.i(PoolServer, `Banned IP tried to connect ${netAddress}`);
                 ws.close();
