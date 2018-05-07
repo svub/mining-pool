@@ -1,7 +1,7 @@
 const fs = require('fs');
 const https = require('https');
-const database = require('metrics/database.js');
-const server = require('metrics/server.js');
+const DatabaseMetrics = require('./metrics/DatabaseMetrics.js');
+const ServerMetrics = require('./metrics/ServerMetrics.js');
 
 class MetricsServer {
     constructor(dbHost, dbPassword, poolServer, port = 8442) {
@@ -10,7 +10,7 @@ class MetricsServer {
         const databaseMetrics = new DatabaseMetrics(dbHost, dbPassword);
         const serverMetrics = new ServerMetrics(poolServer);
 
-        https.createServer(options, (req, res) => {
+        https.createServer(options, async (req, res) => {
             const db = await databaseMetrics.get();
             const server = serverMetrics.get();
             const raw = Object.assign(db, server);
