@@ -77,11 +77,11 @@ for (const seedPeer of config.seedPeers) {
     }
 
     if (config.poolServer.enabled) {
-        const poolServer = new PoolServer($.consensus, config.pool, config.poolServer.port, config.poolServer.mySqlPsw, config.poolServer.mySqlHost, config.poolServer.sslKeyPath, config.poolServer.sslCertPath);
+	const { port, metricsPort, mySqlHost, mySqlPsw, sslKeyPath, sslCertPath } = config.poolServer;
+        const poolServer = new PoolServer($.consensus, config.pool, port, mySqlPsw, mySqlHost, sslKeyPath, sslCertPath);
 
-        if (config.poolMetricsServer.enabled) {
-            $.metricsServer = new MetricsServer(config.poolServer.sslKeyPath, config.poolServer.sslCertPath, config.poolMetricsServer.port, config.poolMetricsServer.password);
-            $.metricsServer.init(poolServer);
+        if (config.poolServer.metricsEnabled) {
+            $.metricsServer = new MetricsServer(mySqlHost, mySqlPsw, poolServer, metricsPort);
         }
 
         process.on('SIGTERM', () => {

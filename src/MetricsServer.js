@@ -1,78 +1,42 @@
 const fs = require('fs');
 const https = require('https');
-const btoa = require('btoa');
-const Nimiq = require('@nimiq/core');
+const database = require('metrics/database.js');
+const server = require('metrics/server.js');
 
 class MetricsServer {
-    constructor(sslKeyPath, sslCertPath, port, password) {
+    constructor(dbHost, dbPassword, poolServer, port = 8442) {
+        this._poolServer = poolServer;
 
-        const options = {
-            key: fs.readFileSync(sslKeyPath),
-            cert: fs.readFileSync(sslCertPath)
-        };
+        const databaseMetrics = new DatabaseMetrics(dbHost, dbPassword);
+        const serverMetrics = new ServerMetrics(poolServer);
 
         https.createServer(options, (req, res) => {
-            if (req.url !== '/metrics') {
-                res.writeHead(301, {'Location': '/metrics'});
-                res.end();
-            } else if (password && req.headers.authorization !== `Basic ${btoa(`metrics:${password}`)}`) {
-                res.writeHead(401, {'WWW-Authenticate': 'Basic realm="Use username metrics and user-defined password to access metrics." charset="UTF-8"'});
-                res.end();
-            } else {
-                this._metrics(res);
-                res.end();
-            }
+            const db = await databaseMetrics.get();
+            const server = serverMetrics.get();
+            const raw = Object.assign(db, server);
+            const extended = this.extend(raw);
+			const formatted = this.format(raw);
+            res.write(JSON.stringify(formatted));
+            res.end();
         }).listen(port);
-
-        /** @type {Map.<string, {occurrences: number, timeSpentProcessing: number}>} */
-        this._messageMeasures = new Map();
     }
 
-    /**
-     * @param {PoolServer} poolServer
-     */
-    init(poolServer) {
-        /** @type {PoolServer} */
-        this._poolServer = poolServer;
+    extend(data) {
+        data.expected = data.rewards/data.connected;
+        return data;
     }
 
-    get _desc() {
-        return {
-            name: this._poolServer.name
-        };
-    }
+    format(raw) {
+        let formatted = Object.assign({}, raw);
 
-    /**
-     * @param {object} more
-     * @returns {object}
-     * @private
-     */
-    _with(more) {
-        const res = this._desc;
-        Object.assign(res, more);
-        return res;
-    }
+        let index = 0, scale = ['H/s', 'kH/s', 'MH/s', 'GH/s', 'TH/s', 'PH/s'];
+        while (formatted.hashpower >= 1000) {
+            index++;
+            formatted.hashpower /= 1000;
+        }
+        formatted.hashpower = `${ formatted.hashpower } ${ scale[index] }`
 
-    _metrics(res) {
-        const clientCounts = this._poolServer.getClientModeCounts();
-        MetricsServer._metric(res, 'pool_clients', this._with({client: 'unregistered'}), clientCounts.unregistered);
-        MetricsServer._metric(res, 'pool_clients', this._with({client: 'smart'}), clientCounts.smart);
-        MetricsServer._metric(res, 'pool_clients', this._with({client: 'nano'}), clientCounts.nano);
-
-        MetricsServer._metric(res, 'pool_ips_banned', this._desc, this._poolServer.numIpsBanned);
-        MetricsServer._metric(res, 'pool_blocks_mined', this._desc, this._poolServer.numBlocksMined);
-        MetricsServer._metric(res, 'pool_total_share_difficulty', this._desc, this._poolServer.totalShareDifficulty);
-    }
-
-    /**
-     * @param res
-     * @param {string} key
-     * @param {object} attributes
-     * @param {number} value
-     * @private
-     */
-    static _metric(res, key, attributes, value) {
-        res.write(`${key}{${Object.keys(attributes).map((a) => `${a}="${attributes[a]}"`).join(',')}} ${value}\n`);
+        return { raw, formatted };
     }
 }
 
