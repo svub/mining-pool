@@ -3,7 +3,7 @@ class ServerMetrics {
         this._poolServer = poolServer;
     }
 
-    async get() {
+    get() {
         const clients = this._poolServer.getClientModeCounts();
         return {
             serverName: this._poolServer.name,

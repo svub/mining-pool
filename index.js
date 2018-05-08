@@ -81,7 +81,7 @@ for (const seedPeer of config.seedPeers) {
         const poolServer = new PoolServer($.consensus, config.pool, port, mySqlPsw, mySqlHost, sslKeyPath, sslCertPath);
 
         if (config.poolServer.metricsEnabled) {
-            $.metricsServer = new MetricsServer(mySqlHost, mySqlPsw, poolServer, metricsPort);
+            $.metricsServer = new MetricsServer(sslKeyPath, sslCertPath, mySqlHost, mySqlPsw, poolServer, metricsPort);
         }
 
         process.on('SIGTERM', () => {

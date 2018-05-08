@@ -1,23 +1,33 @@
+const Nimiq = require('@nimiq/core');
 const fs = require('fs');
 const https = require('https');
+
 const DatabaseMetrics = require('./metrics/DatabaseMetrics.js');
 const ServerMetrics = require('./metrics/ServerMetrics.js');
 
 class MetricsServer {
-    constructor(dbHost, dbPassword, poolServer, port = 8442) {
+    constructor(sslKeyPath, sslCertPath, dbHost, dbPassword, poolServer, port = 8442) {
         this._poolServer = poolServer;
 
         const databaseMetrics = new DatabaseMetrics(dbHost, dbPassword);
         const serverMetrics = new ServerMetrics(poolServer);
 
-        https.createServer(options, async (req, res) => {
+        Nimiq.Log.i(TAG, 'starting metrics server');
+        const sslOptions = {
+            key: fs.readFileSync(sslKeyPath),
+            cert: fs.readFileSync(sslCertPath)
+        };
+        const httpsServer = https.createServer(sslOptions, async (req, res) => {
+            Nimiq.Log.i(TAG, 'preparing metrics...');
             const db = await databaseMetrics.get();
             const server = serverMetrics.get();
             const raw = Object.assign(db, server);
             const extended = this.extend(raw);
-			const formatted = this.format(raw);
-            res.write(JSON.stringify(formatted));
-            res.end();
+            const formatted = this.format(raw);
+            const json = JSON.stringify(formatted, null, 4);
+            res.writeHead(200);
+            res.end(json);
+            Nimiq.Log.i(TAG, `Lastest: ${ json }`);
         }).listen(port);
     }
 
@@ -36,8 +46,11 @@ class MetricsServer {
         }
         formatted.hashpower = `${ formatted.hashpower } ${ scale[index] }`
 
-        return { raw, formatted };
+        return { about, raw, formatted };
     }
 }
+
+const TAG = 'Metrics';
+const about = { version: '1.0.0' }
 
 module.exports = exports = MetricsServer;
