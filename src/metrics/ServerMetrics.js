@@ -17,3 +17,5 @@ class ServerMetrics {
 
     }
 }
+
+module.exports = exports = ServerMetrics;
