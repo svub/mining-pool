@@ -44,9 +44,9 @@ class PoolService extends Nimiq.Observable {
         //this.consensus.blockchain.on('head-changed', (head) => this._synchronizer.push(() => this._setBlockOnMainChain(head, head.height, true)));
 
         this.consensus.blockchain.on('head-changed', (head) => {
-		this._distributePayinsForBlock(head);
-		this._synchronizer.push(() => this._setBlockOnMainChain(head, head.height, true));
-	});
+            this._distributePayinsForBlock(head);
+            this._synchronizer.push(() => this._setBlockOnMainChain(head, head.height, true));
+        });
         this.consensus.blockchain.on('block-reverted', (head) => this._synchronizer.push(() => this._setBlockOnMainChain(head, head.height, false)));
     }
 
@@ -94,6 +94,7 @@ class PoolService extends Nimiq.Observable {
 
         let totalDifficulty = 0;
         for (const row of rows) {
+            // TODO performance: collect all unique users and get their addresses in a single request. better? Or: get address joined in in previous query
             const address = await Helper.getUser(this.connectionPool, row.user);
             ret.set(address, row.difficulty_sum);
             totalDifficulty += row.difficulty_sum;
