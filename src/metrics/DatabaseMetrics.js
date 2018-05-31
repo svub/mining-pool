@@ -19,17 +19,17 @@ class DatabaseMetrics {
 
         if (this._connectionPool) {
             // query DB
-			return DUMMY_DATA; // testing only
+	    return DUMMY_DATA; // testing only
         }
         else return DUMMY_DATA; // testing only
     }
 }
 
 const DUMMY_DATA = {
-    "connected": 100,     // currently
-    "hashpower": 1000000, // current H/s
-    "fee": 0.01,          // fraction
-    "rewards": 4000       // per day
+    "connected": 0,  // currently
+    "hashpower": 0,  // current H/s
+    "fee": 0.01,     // fraction
+    "rewards": 4000  // avg block rewards per day
 }
 
 module.exports = exports = DatabaseMetrics;
